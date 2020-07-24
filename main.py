@@ -101,7 +101,8 @@ async def newchar(ctx, *argv):
             "mp":0,
             "lv":1,
             "xp":0,
-            "affinity": affinity
+            "affinity": affinity,
+            "main": "false"
         }
         if affinity == "fire":
             char["str"] += 1
@@ -154,6 +155,29 @@ async def newchar(ctx, *argv):
             await ctx.send(embed = embed)
         else:
             await ctx.send("No name given")
+    except expression as identifier:
+        await ctx.send("Something didn't go well :| ")
+
+@bot.command()
+async def chars(ctx, *argv):
+    try:
+        chars = []
+        allchars = ""
+        n = 1
+        for char in db.char_sheets.find({"user":ctx.author.id}):
+            chars.append(char)
+            if char["main"] != "false":
+                allchars += "{}. {} [MAIN]\n".format(n, char["name"])
+            else:
+                allchars += "{}. {}\n".format(n, char["name"])
+            n += 1
+            
+        embed = discord.Embed(
+            title = "All {}'s Characters".format(ctx.author.name),
+            color = 0xfcba03,
+            description = allchars
+        )
+        await ctx.send(embed = embed)
     except expression as identifier:
         await ctx.send("Something didn't go well :| ")
 
