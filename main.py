@@ -91,7 +91,7 @@ def generate_char(name, user_id):
 
 def embed_sheet(char):
         embed = discord.Embed(
-            title = name,
+            title = char["name"],
             color = 0xfcba03
         )
         embed.add_field(name = "str", value = char["str"])
@@ -198,6 +198,23 @@ async def chars(ctx, *argv):
         await ctx.send("Something didn't go well :| ")
 
 @bot.command()
+async def char(ctx, index, *argv):
+    try:
+        i = 0
+        found = False
+        for char in db.char_sheets.find({"user":ctx.author.id}):
+            if i == ( int(index)-1 ):
+                embed = embed_sheet(char)
+                await ctx.send(embed = embed)
+                found = True
+                break
+            i += 1
+        if found == False:
+            await ctx.send("Character was not found")
+    except:
+        await ctx.send("Something didn't go well :| ")
+
+@bot.command()
 async def setmain(ctx, index, *argv):
     try:
         i = 0
@@ -294,7 +311,6 @@ async def hit(ctx, player, damage, *argv):
             await ctx.send("{} was not found. You might have forgot capital letters.".format(player))
     except expression as identifier:
         await ctx.send("Something didn't go well :| ")
-
 
 @bot.command()
 async def rest(ctx, *argv):
