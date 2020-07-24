@@ -60,6 +60,10 @@ async def roll(ctx, dice, *argv):
             result = random.randint(1, 6) + random.randint(1, 6) + random.randint(1, 6)
             result = add_modifier(result, argv)
             await ctx.send(result)
+        if dice == "d8":
+            result = random.randint(1, 8)
+            result = add_modifier(result, argv)
+            await ctx.send(result)
     except expression as identifier:
         await ctx.send("Something is not right :c")
 
