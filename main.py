@@ -181,5 +181,22 @@ async def chars(ctx, *argv):
     except expression as identifier:
         await ctx.send("Something didn't go well :| ")
 
+@bot.command()
+async def setmain(ctx, index, *argv):
+    try:
+        i = 0
+        found = False
+        for char in db.char_sheets.find({"user":ctx.author.id}):
+            if i == ( int(index) - 1 ):
+                db.char_sheets.update_many({"user":ctx.author.id}, {"$set":{ "main":"false" }})
+                db.char_sheets.update_one({ "_id" : char["_id"] }, {"$set":{ "main":"true" }})
+                found = True
+                await ctx.send("Character {} is now the main".format(char["name"]))
+                break
+            i += 1
+        if found == False:
+            await ctx.send("Character was not found")
+    except expression as identifier:
+        await ctx.send("Something didn't go well :| ")
 
 bot.run(TOKEN)
