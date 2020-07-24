@@ -28,27 +28,40 @@ async def on_ready():
 
 @bot.command()
 async def roll(ctx, dice, *argv): 
+    def add_modifier(value, *argv):
+        try:
+            if argv != None:
+                if "+" in argv[0]:
+                    mod = int(argv[0][1])
+                    result = value + mod
+                    return "{}! ({} + {})".format(result, value, mod)
+                elif "-" in argv[0]:
+                    mod = int(argv[0][1])
+                    result = value - mod
+                    return "{}! ({} - {})".format(result, value, mod)
+            return "{}!".format(value)
+        except expression as identifier:
+            return "{}!".format(value)
     try:
         if dice == "d20":
             result = random.randint(1, 20)
-            await ctx.send("{}!".format(result))
+            result = add_modifier(result, argv)
+            await ctx.send(result)
 
         if dice == "d6":
             result = random.randint(1, 6)
-            await ctx.send("{}!".format(result))
+            result = add_modifier(result, argv)
+            await ctx.send(result)
         if dice == "2d6":
-            r1 = random.randint(1, 6)
-            r2 = random.randint(1, 6)
-            rf = r1+r2
-            await ctx.send("{}! ({} + {})".format(rf, r1, r2))
+            result = random.randint(1, 6) + random.randint(1, 6)
+            result = add_modifier(result, argv)
+            await ctx.send(result)
         if dice == "3d6":
-            r1 = random.randint(1, 6)
-            r2 = random.randint(1, 6)
-            r3 = random.randint(1, 6)
-            rf = r1 + r2 + r3
-            await ctx.send("{}! ({} + {} + {})".format(rf, r1, r2, r3))
+            result = random.randint(1, 6) + random.randint(1, 6) + random.randint(1, 6)
+            result = add_modifier(result, argv)
+            await ctx.send(result)
     except expression as identifier:
-        pass
+        await ctx.send("Something is not right :c")
 
 
 
