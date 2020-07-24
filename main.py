@@ -199,4 +199,21 @@ async def setmain(ctx, index, *argv):
     except expression as identifier:
         await ctx.send("Something didn't go well :| ")
 
+@bot.command()
+async def delchar(ctx, index, *argv):
+    try:
+        i = 0
+        found = False
+        for char in db.char_sheets.find({"user":ctx.author.id}):
+            if i == ( int(index) - 1 ):
+                db.char_sheets.delete_one({ "_id" : char["_id"] })
+                found = True
+                await ctx.send("Character {} has been removed".format(char["name"]))
+                break
+            i += 1
+        if found == False:
+            await ctx.send("Character was not found")
+    except expression as identifier:
+        await ctx.send("Something didn't go well :| ")
+
 bot.run(TOKEN)
