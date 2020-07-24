@@ -295,4 +295,16 @@ async def hit(ctx, player, damage, *argv):
     except expression as identifier:
         await ctx.send("Something didn't go well :| ")
 
+
+@bot.command()
+async def rest(ctx, *argv):
+    try:
+        char = get_main_char(ctx.author.id)
+        char["hp"] = 12 + char["vit"]
+        char["mp"] = 10 + char["int"]
+        await ctx.send("{} is now resting...".format(char["name"]))
+        update_char(char)
+    except:
+        await ctx.send("Something didn't go well :|")
+
 bot.run(TOKEN)
