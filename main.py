@@ -216,4 +216,45 @@ async def delchar(ctx, index, *argv):
     except expression as identifier:
         await ctx.send("Something didn't go well :| ")
 
+@bot.command()
+async def test(ctx, type, *argv):
+    def get_main_char(user_id):
+        try:
+            char = db.char_sheets.find_one({"user":user_id, "main":"true"})
+            if char != None:
+                return char
+            else:
+                return {}
+        except expression as identifier:
+            return {}
+    try:
+        print("Attepting to test {}".format(type))
+        char = get_main_char(ctx.author.id)
+        if type == "str":
+            value = random.randint(1, 20) 
+            result = value + char["str"]
+            await ctx.send("{} attepts a Test of Strength!!\n{}!! ({} + {})".format(char["name"], result, value, char["str"]))
+        if type == "dex":
+            value = random.randint(1, 20) 
+            result = value + char["dex"]
+            await ctx.send("{} attepts a Test of Dexterity!!\n{}!! ({} + {})".format(char["name"], result, value, char["dex"]))
+        if type == "vit":
+            value = random.randint(1, 20) 
+            result = value + char["vit"]
+            await ctx.send("{} attepts a Test of Vitality!!\n{}!! ({} + {})".format(char["name"], result, value, char["vit"]))
+        if type == "int":
+            value = random.randint(1, 20) 
+            result = value + char["int"]
+            await ctx.send("{} attepts a Test of Intelligence!!\n{}!! ({} + {})".format(char["name"], result, value, char["int"]))
+        if type == "per":
+            value = random.randint(1, 20) 
+            result = value + char["per"]
+            await ctx.send("{} attepts a Test of Perception!!\n{}!! ({} + {})".format(char["name"], result, value, char["per"]))
+        if type == "cha":
+            value = random.randint(1, 20) 
+            result = value + char["cha"]
+            await ctx.send("{} attepts a Test of Charisma!!\n{}!! ({} + {})".format(char["name"], result, value, char["cha"]))
+    except expression as identifier:
+        await ctx.send("Something didn't go well :| ")
+
 bot.run(TOKEN)
