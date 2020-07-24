@@ -41,6 +41,80 @@ async def on_ready():
     print(bot.user.id)
     print('------')
 
+def get_main_char(user_id):
+        try:
+            char = db.char_sheets.find_one({"user":user_id, "main":"true"})
+            if char != None:
+                return char
+            else:
+                return {}
+        except expression as identifier:
+            return {}
+
+def generate_char(name, user_id):
+        elements = ["fire", "air", "earth", "water"]
+        affinity = random.choice(elements)
+        char = {
+            "name":name,
+            "user": user_id,
+            "str":0,
+            "dex":0,
+            "vit":0,
+            "int":0,
+            "per":0,
+            "cha":random.randint(-2, 2),
+            "def":0,
+            "hp":0,
+            "mp":0,
+            "lv":1,
+            "xp":0,
+            "affinity": affinity,
+            "main": "false"
+        }
+        if affinity == "fire":
+            char["str"] += 1
+            char["int"] -= 1
+        if affinity == "water":
+            char["int"] += 1
+            char["str"] -= 1
+        if affinity == "air":
+            char["dex"] += 1
+            char["vit"] -= 1
+        if affinity == "earth":
+            char["vit"] += 1
+            char["dex"] -= 1
+        char["def"] = 10+char["dex"]+char["vit"]
+        char["hp"] = 12+char["vit"]
+        char["mp"] = 10+char["int"]
+
+        return char
+
+def embed_sheet(char):
+        embed = discord.Embed(
+            title = name,
+            color = 0xfcba03
+        )
+        embed.add_field(name = "str", value = char["str"])
+        embed.add_field(name = "dex", value = char["dex"])
+        embed.add_field(name = "vit", value = char["vit"])
+        embed.add_field(name = "int", value = char["int"])
+        embed.add_field(name = "per", value = char["per"])
+        embed.add_field(name = "cha", value = char["cha"])
+        embed.add_field(name = "DEF", value = char["def"])
+        embed.add_field(name = "HP", value = char["hp"])
+        embed.add_field(name = "MP", value = char["mp"])
+        embed.set_footer(text = "LV: {}\nXP: {}/{}\naffinity: {}".format(char["lv"], char["xp"], char["lv"]*10, char["affinity"] ))
+
+        return embed
+
+def save_char(char):
+        db.char_sheets.insert_one(char)
+        print("Saved '{}' for user_id '{}'".format(char["name"], char["user"]))
+
+def update_char(char):
+    db.char_sheets.update_one({ "_id" : char["_id"] }, {"$set":char})
+    print("Updated '{}' for user_id '{}'".format(char["name"], char["user"]))
+
 @bot.command()
 async def roll(ctx, dice, *argv): 
     def add_modifier(value, *argv):
@@ -84,64 +158,6 @@ async def roll(ctx, dice, *argv):
 
 @bot.command()
 async def newchar(ctx, *argv):
-    def generate_char(name, user_id):
-        elements = ["fire", "air", "earth", "water"]
-        affinity = random.choice(elements)
-        char = {
-            "name":name,
-            "user": user_id,
-            "str":0,
-            "dex":0,
-            "vit":0,
-            "int":0,
-            "per":0,
-            "cha":random.randint(-2, 2),
-            "def":0,
-            "hp":0,
-            "mp":0,
-            "lv":1,
-            "xp":0,
-            "affinity": affinity,
-            "main": "false"
-        }
-        if affinity == "fire":
-            char["str"] += 1
-            char["int"] -= 1
-        if affinity == "water":
-            char["int"] += 1
-            char["str"] -= 1
-        if affinity == "air":
-            char["dex"] += 1
-            char["vit"] -= 1
-        if affinity == "earth":
-            char["vit"] += 1
-            char["dex"] -= 1
-        char["def"] = 10+char["dex"]+char["vit"]
-        char["hp"] = 12+char["vit"]
-        char["mp"] = 10+char["int"]
-
-        return char
-    def embed_sheet(char):
-        embed = discord.Embed(
-            title = name,
-            color = 0xfcba03
-        )
-        embed.add_field(name = "str", value = char["str"])
-        embed.add_field(name = "dex", value = char["dex"])
-        embed.add_field(name = "vit", value = char["vit"])
-        embed.add_field(name = "int", value = char["int"])
-        embed.add_field(name = "per", value = char["per"])
-        embed.add_field(name = "cha", value = char["cha"])
-        embed.add_field(name = "DEF", value = char["def"])
-        embed.add_field(name = "HP", value = char["hp"])
-        embed.add_field(name = "MP", value = char["mp"])
-        embed.set_footer(text = "LV: {}\nXP: {}/{}\naffinity: {}".format(char["lv"], char["xp"], char["lv"]*10, char["affinity"] ))
-
-        return embed
-
-    def save_char(char):
-        db.char_sheets.insert_one(char)
-        print("Saved '{}' for user_id '{}'".format(char["name"], char["user"]))
     try:
         name = ''
         if len(argv) > 0:
@@ -218,15 +234,6 @@ async def delchar(ctx, index, *argv):
 
 @bot.command()
 async def test(ctx, type, *argv):
-    def get_main_char(user_id):
-        try:
-            char = db.char_sheets.find_one({"user":user_id, "main":"true"})
-            if char != None:
-                return char
-            else:
-                return {}
-        except expression as identifier:
-            return {}
     try:
         print("Attepting to test {}".format(type))
         char = get_main_char(ctx.author.id)
@@ -254,6 +261,37 @@ async def test(ctx, type, *argv):
             value = random.randint(1, 20) 
             result = value + char["cha"]
             await ctx.send("{} attepts a Test of Charisma!!\n{}!! ({} + {})".format(char["name"], result, value, char["cha"]))
+    except expression as identifier:
+        await ctx.send("Something didn't go well :| ")
+
+@bot.command()
+async def hit(ctx, player, damage, *argv):
+    try:
+        guild = ctx.guild
+        user = guild.get_member_named( player )
+        if user != None:
+            char = get_main_char( user.id )
+            char["hp"] -= int(damage)
+            if char["hp"] > 0:
+                await ctx.send("{} has taken {}pts of damage! It now has {}hp.".format(char["name"], damage, char["hp"]))
+            else:#Dying
+                successes = 0
+                fails = 0
+                while True:
+                    roll = random.randint(1, 20)
+                    if roll >= 10:
+                        successes += 1
+                        if successes == 3:
+                            await ctx.send("{} is unconscious and very weak now!".format(char["name"]))
+                            break
+                    else:
+                        fails += 1
+                        if fails == 3:
+                            await ctx.send("{} has taken {}pts of damage! It is now dead.".format(char["name"], damage))
+                            break
+            update_char(char)
+        else:
+            await ctx.send("{} was not found. You might have forgot capital letters.".format(player))
     except expression as identifier:
         await ctx.send("Something didn't go well :| ")
 
