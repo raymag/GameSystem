@@ -81,6 +81,7 @@ def generate_char(name, user_id):
             "mp":0,
             "lv":1,
             "xp":0,
+            "cp":0,
             "affinity": affinity,
             "main": "false"
         }
