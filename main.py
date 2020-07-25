@@ -343,7 +343,7 @@ async def rest(ctx, *argv):
     try:
         blocked_status = ["dead"]
         char = get_main_char(ctx.author.id)
-        if char["status"] not in blocked_status or "res" in argv:
+        if char["status"] not in blocked_status:
             char["hp"] = 12 + char["vit"]
             char["mp"] = 10 + char["int"]
             char["status"] = "alive"
