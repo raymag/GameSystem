@@ -165,6 +165,9 @@ async def newchar(ctx, *argv):
                 name += word + ' '
 
             char = generate_char(name, ctx.author.id)
+            main = get_main_char(ctx.author.id)
+            if main == {}:
+                char["main"] = "true"
             save_char(char)
             embed = embed_sheet(char)
 
