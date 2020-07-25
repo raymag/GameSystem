@@ -82,6 +82,8 @@ def generate_char(name, user_id):
             "lv":1,
             "xp":0,
             "cp":0,
+            "gold":0,
+            "ip":0,
             "affinity": affinity,
             "main": "false"
         }
@@ -108,17 +110,20 @@ def embed_sheet(char):
             title = char["name"],
             color = 0xfcba03
         )
-        embed.add_field(name = "str", value = char["str"])
-        embed.add_field(name = "dex", value = char["dex"])
-        embed.add_field(name = "vit", value = char["vit"])
-        embed.add_field(name = "int", value = char["int"])
-        embed.add_field(name = "per", value = char["per"])
-        embed.add_field(name = "cha", value = char["cha"])
+        embed.add_field(name = "STR", value = char["str"])
+        embed.add_field(name = "DEX", value = char["dex"])
+        embed.add_field(name = "VIT", value = char["vit"])
+        embed.add_field(name = "INT", value = char["int"])
+        embed.add_field(name = "PER", value = char["per"])
+        embed.add_field(name = "CHA", value = char["cha"])
         embed.add_field(name = "DEF", value = char["def"])
         embed.add_field(name = "HP", value = char["hp"])
         embed.add_field(name = "MP", value = char["mp"])
-        embed.set_footer(text = "LV: {}\nXP: {}/{}\ncp: {}\naffinity: {}\nstatus: {}"
-        .format(char["lv"], char["xp"], char["lv"]*10, char["cp"], char["affinity"], char["status"] ))
+        embed.add_field(name = "CP", value = char["cp"])
+        embed.add_field(name = "IP", value = char["ip"])
+        embed.add_field(name = "Gold", value = char["gold"])
+        embed.set_footer(text = "LV: {}\nXP: {}/{}\naffinity: {}\nstatus: {}"
+        .format(char["lv"], char["xp"], char["lv"]*10, char["affinity"], char["status"] ))
 
         return embed
 
