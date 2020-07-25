@@ -391,17 +391,25 @@ async def givexp(ctx, xp, *argv):
                 break
         if isGM:
             names = ""
+            levelup_messages = []
             for username in argv:
                 player = ctx.guild.get_member_named(username)
                 if player != None:
                     char = get_main_char(player.id)
                     if char != None:
                         char["xp"] += int(xp)
+                        if char["xp"] >= ( char["lv"] * 10 ):
+                            left = char["xp"] - ( char["lv"] * 10 )
+                            char["xp"] = left
+                            char["lv"] += 1
+                            levelup_messages.append( "{} leveled up! Level {} now!".format(char["name"], char["lv"]) )
                         update_char(char)
                         names += username + ", "
             if names != "":
                 names = names[:-2]
             await ctx.send("{}xp was given to {}!".format(xp, names))
+            for msg in levelup_messages:
+                await ctx.send(msg)
         else:
             await ctx.send("It's necessary to be a Game Master in order to execute this command.")
     except expression as identifier:
