@@ -403,6 +403,8 @@ async def givexp(ctx, xp, *argv):
                             left = char["xp"] - ( char["lv"] * 10 )
                             char["xp"] = left
                             char["lv"] += 1
+                            if char["lv"] % 2 != 0:
+                                char["cp"] += 1
                             levelup_messages.append( "{} leveled up! Level {} now!".format(char["name"], char["lv"]) )
                         update_char(char)
                         names += username + ", "
