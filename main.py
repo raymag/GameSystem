@@ -354,4 +354,31 @@ async def rest(ctx, *argv):
     except:
         await ctx.send("Something didn't go well :|")
 
+@bot.command()
+async def res(ctx, username, *argv):
+    try:
+        isGM = False
+        for role in ctx.author.roles:
+            if role.name == "Game Master":
+                isGM = True
+                break
+        if isGM:
+            player = ctx.guild.get_member_named(username)
+            if player != None:
+                char = get_main_char(player.id)
+                if char != {}:
+                    char["status"] = "alive"
+                    char["hp"] = 12 + char["vit"]
+                    char["mp"] = 10 + char["int"]
+                    update_char(char)
+                    await ctx.send("{} came back from the dead.".format(char["name"]))
+                else:
+                    await ctx.send("No character was found.")
+            else:
+                await ctx.send("{} was not found.".format(username))
+        else:
+            await ctx.send("You must be a Game Master to use this command.")
+    except expression as identifier:
+        await ctx.send("Something didn't go well :|")
+
 bot.run(TOKEN)
