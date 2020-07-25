@@ -1,7 +1,7 @@
 # GameSystem
 A Discord Bot for playing Tabletop Role-Playing-Games using Raymag's system.
 
-Want to add this bot? [Click here!](https://discord.com/api/oauth2/authorize?client_id=735522883597500487&scope=bot&permissions=1)
+Want to add this bot? [Click here!](https://discord.com/api/oauth2/authorize?client_id=735522883597500487&scope=bot&permissions=1476619362)
 
 ## Commands
 1. [$roll <dice> [opt:modifier]](#roll)
