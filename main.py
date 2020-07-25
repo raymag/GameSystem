@@ -403,8 +403,7 @@ async def givexp(ctx, xp, *argv):
                 names = names[:-2]
             await ctx.send("{}xp was given to {}!".format(xp, names))
         else:
-            await ctx.send("It's necessary to be a Game Master to execute this command.")
-                
+            await ctx.send("It's necessary to be a Game Master in order to execute this command.")
     except expression as identifier:
         await ctx.send("Something didn't go well :|")
 
