@@ -450,4 +450,29 @@ async def givegold(ctx, gold, *argv):
     except expression as identifier:
         await ctx.send("Something didn't go well :|")
 
+@bot.command()
+async def iattr(ctx, attr, *argv):
+    try:
+        char = get_main_char(ctx.author.id)
+        if char != None:
+            if char["cp"] > 0:
+                attrs = ['str', 'dex', 'int', 'vit', 'per', 'cha']
+                if attr in attrs:
+                    char[attr] += 1
+                    char["def"] = 10+char["dex"]+char["vit"]
+                    char["hp"] = 12+char["vit"]
+                    char["mp"] = 10+char["int"]
+                    char["cp"] -= 1
+                    update_char(char)
+                    await ctx.send("{} points was increased with success!".format(attr))
+                else:
+                    await ctx.send("Attribute {} does not exists.".format(attr))
+
+            else:
+                await ctx.send("You don't have enough CP to use.")
+        else:
+            await ctx.send("You don't have a main character.")
+    except expression as identifier:
+        await ctx.send("Something didn't go well :|")
+
 bot.run(TOKEN)
