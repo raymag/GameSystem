@@ -14,6 +14,10 @@ Want to add this bot? [Click here!](https://discord.com/api/oauth2/authorize?cli
 8. [$hit <username> <damage>](#hit)
 9. [$rest](#rest)
 
+<p align=center>
+<img width=60% src=https://media.giphy.com/media/duexIlfr9yYwYE23UA/giphy.gif>
+</p>
+
 
 ## $roll
 
