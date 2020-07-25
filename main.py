@@ -117,8 +117,8 @@ def embed_sheet(char):
         embed.add_field(name = "DEF", value = char["def"])
         embed.add_field(name = "HP", value = char["hp"])
         embed.add_field(name = "MP", value = char["mp"])
-        embed.set_footer(text = "LV: {}\nXP: {}/{}\naffinity: {}\nstatus: {}"
-        .format(char["lv"], char["xp"], char["lv"]*10, char["affinity"], char["status"] ))
+        embed.set_footer(text = "LV: {}\nXP: {}/{}\ncp: {}\naffinity: {}\nstatus: {}"
+        .format(char["lv"], char["xp"], char["lv"]*10, char["cp"], char["affinity"], char["status"] ))
 
         return embed
 
