@@ -404,7 +404,7 @@ async def givexp(ctx, xp, *argv):
                     char = get_main_char(player.id)
                     if char != None:
                         char["xp"] += int(xp)
-                        if char["xp"] >= ( char["lv"] * 10 ):
+                        while char["xp"] >= ( char["lv"] * 10 ):
                             left = char["xp"] - ( char["lv"] * 10 )
                             char["xp"] = left
                             char["lv"] += 1
