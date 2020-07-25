@@ -424,4 +424,30 @@ async def givexp(ctx, xp, *argv):
     except expression as identifier:
         await ctx.send("Something didn't go well :|")
 
+@bot.command()
+async def givegold(ctx, gold, *argv):
+    # try:
+        isGM = False
+        for role in ctx.author.roles:
+            if role.name == "Game Master":
+                isGM = True
+                break
+        if isGM:
+            names = ""
+            for username in argv:
+                player = ctx.guild.get_member_named(username)
+                if player != None:
+                    char = get_main_char(player.id)
+                    if char != None:
+                        char["gold"] += int(gold)
+                        update_char(char)
+                        names += username + ", "
+            if names != "":
+                names = names[:-2]
+            await ctx.send("{} of gold was given to {}.".format(gold, names))
+        else:
+            await ctx.send("You must be a Game Master in order to use this command.")
+    # except expression as identifier:
+        # await ctx.send("Something didn't go well :|")
+
 bot.run(TOKEN)
