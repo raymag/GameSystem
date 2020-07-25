@@ -257,32 +257,35 @@ async def delchar(ctx, index, *argv):
 @bot.command()
 async def test(ctx, type, *argv):
     try:
-        print("Attepting to test {}".format(type))
         char = get_main_char(ctx.author.id)
-        if type == "str":
-            value = random.randint(1, 20) 
-            result = value + char["str"]
-            await ctx.send("{} attempts a Test of Strength!!\n{}!! ({} + {})".format(char["name"], result, value, char["str"]))
-        if type == "dex":
-            value = random.randint(1, 20) 
-            result = value + char["dex"]
-            await ctx.send("{} attempts a Test of Dexterity!!\n{}!! ({} + {})".format(char["name"], result, value, char["dex"]))
-        if type == "vit":
-            value = random.randint(1, 20) 
-            result = value + char["vit"]
-            await ctx.send("{} attempts a Test of Vitality!!\n{}!! ({} + {})".format(char["name"], result, value, char["vit"]))
-        if type == "int":
-            value = random.randint(1, 20) 
-            result = value + char["int"]
-            await ctx.send("{} attempts a Test of Intelligence!!\n{}!! ({} + {})".format(char["name"], result, value, char["int"]))
-        if type == "per":
-            value = random.randint(1, 20) 
-            result = value + char["per"]
-            await ctx.send("{} attempts a Test of Perception!!\n{}!! ({} + {})".format(char["name"], result, value, char["per"]))
-        if type == "cha":
-            value = random.randint(1, 20) 
-            result = value + char["cha"]
-            await ctx.send("{} attempts a Test of Charisma!!\n{}!! ({} + {})".format(char["name"], result, value, char["cha"]))
+        blocked_status = ["dead", "unconscious"]
+        if char["status"] not in blocked_status:
+            if type == "str":
+                value = random.randint(1, 20) 
+                result = value + char["str"]
+                await ctx.send("{} attempts a Test of Strength!!\n{}!! ({} + {})".format(char["name"], result, value, char["str"]))
+            if type == "dex":
+                value = random.randint(1, 20) 
+                result = value + char["dex"]
+                await ctx.send("{} attempts a Test of Dexterity!!\n{}!! ({} + {})".format(char["name"], result, value, char["dex"]))
+            if type == "vit":
+                value = random.randint(1, 20) 
+                result = value + char["vit"]
+                await ctx.send("{} attempts a Test of Vitality!!\n{}!! ({} + {})".format(char["name"], result, value, char["vit"]))
+            if type == "int":
+                value = random.randint(1, 20) 
+                result = value + char["int"]
+                await ctx.send("{} attempts a Test of Intelligence!!\n{}!! ({} + {})".format(char["name"], result, value, char["int"]))
+            if type == "per":
+                value = random.randint(1, 20) 
+                result = value + char["per"]
+                await ctx.send("{} attempts a Test of Perception!!\n{}!! ({} + {})".format(char["name"], result, value, char["per"]))
+            if type == "cha":
+                value = random.randint(1, 20) 
+                result = value + char["cha"]
+                await ctx.send("{} attempts a Test of Charisma!!\n{}!! ({} + {})".format(char["name"], result, value, char["cha"]))
+        else:
+            await ctx.send("{} is unable to test because it's {}.".format(char["name"], char["status"]))
     except expression as identifier:
         await ctx.send("Something didn't go well :| ")
 
@@ -326,12 +329,16 @@ async def hit(ctx, player, damage, *argv):
 @bot.command()
 async def rest(ctx, *argv):
     try:
+        blocked_status = ["dead"]
         char = get_main_char(ctx.author.id)
-        char["hp"] = 12 + char["vit"]
-        char["mp"] = 10 + char["int"]
-        char["status"] = "alive"
-        await ctx.send("{} is now resting...".format(char["name"]))
-        update_char(char)
+        if char["status"] not in blocked_status:
+            char["hp"] = 12 + char["vit"]
+            char["mp"] = 10 + char["int"]
+            char["status"] = "alive"
+            await ctx.send("{} is now resting...".format(char["name"]))
+            update_char(char)
+        else:
+            await ctx.send("{} can't rest because it is {} right now.".format(char["name"], char["status"]))
     except:
         await ctx.send("Something didn't go well :|")
 
