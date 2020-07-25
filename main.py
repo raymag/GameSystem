@@ -304,11 +304,16 @@ async def hit(ctx, player, damage, *argv):
                     if roll >= 10:
                         successes += 1
                         if successes == 3:
+                            char["hp"] = 0
+                            update_char(char)
                             await ctx.send("{} is unconscious and very weak now!".format(char["name"]))
                             break
                     else:
                         fails += 1
                         if fails == 3:
+                            char["hp"] = 0
+                            char["status"] = "dead"
+                            update_char(char)
                             await ctx.send("{} has taken {}pts of damage! It is now dead.".format(char["name"], damage))
                             break
             update_char(char)
