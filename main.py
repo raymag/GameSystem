@@ -305,6 +305,7 @@ async def hit(ctx, player, damage, *argv):
                         successes += 1
                         if successes == 3:
                             char["hp"] = 0
+                            char["status"] = "unconscious"
                             update_char(char)
                             await ctx.send("{} is unconscious and very weak now!".format(char["name"]))
                             break
@@ -328,6 +329,7 @@ async def rest(ctx, *argv):
         char = get_main_char(ctx.author.id)
         char["hp"] = 12 + char["vit"]
         char["mp"] = 10 + char["int"]
+        char["status"] = "alive"
         await ctx.send("{} is now resting...".format(char["name"]))
         update_char(char)
     except:
