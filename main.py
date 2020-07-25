@@ -41,6 +41,18 @@ async def on_ready():
     print(bot.user.id)
     print('------')
 
+@bot.event
+async def on_member_join(member):
+    guild = member.guild
+    roles = guild.roles
+    player_role = None
+    for role in roles:
+        if role.name == "Player":
+            player_role = role
+            break
+    if player_role != None:
+        await member.add_roles(player_role)
+
 def get_main_char(user_id):
         try:
             char = db.char_sheets.find_one({"user":user_id, "main":"true"})
