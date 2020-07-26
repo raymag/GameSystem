@@ -7,6 +7,8 @@ import math
 import asyncio
 import os
 
+import gamesystem
+
 from discord.ext import commands
 from pymongo import MongoClient
 
@@ -50,16 +52,15 @@ async def on_member_join(member):
         if role.name == "Player":
             player_role = role
             break
-    if player_role != None:
+    if player_role:
         await member.add_roles(player_role)
 
 def get_main_char(user_id):
         try:
             char = db.char_sheets.find_one({"user":user_id, "main":"true"})
-            if char != None:
-                return char
-            else:
+            if not char:
                 return {}
+            return char
         except expression as identifier:
             return {}
 
@@ -139,7 +140,7 @@ def update_char(char):
 async def roll(ctx, dice, *argv): 
     def add_modifier(value, *argv):
         try:
-            if argv != None:
+            if argv:
                 if "+" in argv[0]:
                     mod = int(argv[0][1])
                     result = value + mod
@@ -186,7 +187,7 @@ async def newchar(ctx, *argv):
 
             char = generate_char(name, ctx.author.id)
             main = get_main_char(ctx.author.id)
-            if main == {}:
+            if not main:
                 char["main"] = "true"
             save_char(char)
             embed = embed_sheet(char)
@@ -201,20 +202,20 @@ async def newchar(ctx, *argv):
 async def chars(ctx, *argv):
     try:
         chars = []
-        allchars = ""
+        allchars = []
         n = 1
         for char in db.char_sheets.find({"user":ctx.author.id}):
             chars.append(char)
             if char["main"] != "false":
-                allchars += "{}. {} [MAIN]\n".format(n, char["name"])
+                allchars.append("{}. {} [MAIN]\n".format(n, char["name"]))
             else:
-                allchars += "{}. {}\n".format(n, char["name"])
+                allchars.append("{}. {}\n".format(n, char["name"]))
             n += 1
             
         embed = discord.Embed(
             title = "All {}'s Characters".format(ctx.author.name),
             color = 0xfcba03,
-            description = allchars
+            description = "".join(allchars)
         )
         await ctx.send(embed = embed)
     except expression as identifier:
@@ -232,7 +233,7 @@ async def char(ctx, index, *argv):
                 found = True
                 break
             i += 1
-        if found == False:
+        if not found:
             await ctx.send("Character was not found")
     except:
         await ctx.send("Something didn't go well :| ")
@@ -250,7 +251,7 @@ async def setmain(ctx, index, *argv):
                 await ctx.send("Character {} is now the main".format(char["name"]))
                 break
             i += 1
-        if found == False:
+        if not found:
             await ctx.send("Character was not found")
     except expression as identifier:
         await ctx.send("Something didn't go well :| ")
@@ -267,7 +268,7 @@ async def delchar(ctx, index, *argv):
                 await ctx.send("Character {} has been removed".format(char["name"]))
                 break
             i += 1
-        if found == False:
+        if not found:
             await ctx.send("Character was not found")
     except expression as identifier:
         await ctx.send("Something didn't go well :| ")
@@ -312,7 +313,7 @@ async def hit(ctx, player, damage, *argv):
     try:
         guild = ctx.guild
         user = guild.get_member_named( player )
-        if user != None:
+        if user:
             char = get_main_char( user.id )
             char["hp"] -= int(damage)
             if char["hp"] > 0:
@@ -372,7 +373,7 @@ async def res(ctx, username, *argv):
             player = ctx.guild.get_member_named(username)
             if player != None:
                 char = get_main_char(player.id)
-                if char != {}:
+                if char:
                     char["status"] = "alive"
                     char["hp"] = 12 + char["vit"]
                     char["mp"] = 10 + char["int"]
@@ -396,13 +397,13 @@ async def givexp(ctx, xp, *argv):
                 isGM = True
                 break
         if isGM:
-            names = ""
+            names = []
             levelup_messages = []
             for username in argv:
                 player = ctx.guild.get_member_named(username)
-                if player != None:
+                if player:
                     char = get_main_char(player.id)
-                    if char != None:
+                    if char:
                         char["xp"] += int(xp)
                         while char["xp"] >= ( char["lv"] * 10 ):
                             left = char["xp"] - ( char["lv"] * 10 )
@@ -413,8 +414,9 @@ async def givexp(ctx, xp, *argv):
                                 char["cp"] += 1
                             levelup_messages.append( "{} leveled up! Level {} now!".format(char["name"], char["lv"]) )
                         update_char(char)
-                        names += username + ", "
-            if names != "":
+                        names.append( username + ", " )
+            names = "".join(names)
+            if names:
                 names = names[:-2]
             await ctx.send("{}xp was given to {}!".format(xp, names))
             for msg in levelup_messages:
@@ -433,7 +435,7 @@ async def givegold(ctx, gold, *argv):
                 isGM = True
                 break
         if isGM:
-            names = ""
+            names = []
             for username in argv:
                 player = ctx.guild.get_member_named(username)
                 if player != None:
@@ -441,8 +443,9 @@ async def givegold(ctx, gold, *argv):
                     if char != None:
                         char["gold"] += int(gold)
                         update_char(char)
-                        names += username + ", "
-            if names != "":
+                        names.append( username + ", " )
+            names = "".join(names)
+            if names:
                 names = names[:-2]
             await ctx.send("{} of gold was given to {}.".format(gold, names))
         else:
@@ -454,7 +457,7 @@ async def givegold(ctx, gold, *argv):
 async def iattr(ctx, attr, *argv):
     try:
         char = get_main_char(ctx.author.id)
-        if char != None:
+        if char:
             if char["cp"] > 0:
                 attrs = ['str', 'dex', 'int', 'vit', 'per', 'cha']
                 if attr in attrs:
