@@ -1,9 +1,7 @@
+import character
+
 import discord
 import random
-import requests
-import time
-import json
-import math
 import asyncio
 import os
 
@@ -14,7 +12,7 @@ from pymongo import MongoClient
 
 def open_database():
     try:
-        db_file = open("db.txt", "r").read().split("\n")
+        db_file = open("./db.txt", "r").read().split("\n")
         username = db_file[0]
         password = db_file[1]
         database_id = db_file[2]
@@ -27,7 +25,7 @@ def open_database():
     return client.server
 
 bot = commands.Bot(command_prefix='$')
-token_file = "token.txt"
+token_file = "./token.txt"
 db = open_database()
 
 try:
@@ -57,7 +55,7 @@ async def on_member_join(member):
 
 def get_main_char(user_id):
         try:
-            char = db.char_sheets.find_one({"user":user_id, "main":"true"})
+            char = db.characters.find_one({"_Character__user":user_id, "_Character__main": True})
             if not char:
                 return {}
             return char
@@ -65,76 +63,40 @@ def get_main_char(user_id):
             return {}
 
 def generate_char(name, user_id):
-        elements = ["fire", "air", "earth", "water"]
-        affinity = random.choice(elements)
-        char = {
-            "name":name,
-            "user": user_id,
-            "status": "alive",
-            "str":0,
-            "dex":0,
-            "vit":0,
-            "int":0,
-            "per":0,
-            "cha":random.randint(-2, 2),
-            "def":0,
-            "hp":0,
-            "mp":0,
-            "lv":1,
-            "xp":0,
-            "cp":0,
-            "gold":0,
-            "ip":0,
-            "affinity": affinity,
-            "main": "false"
-        }
-        if affinity == "fire":
-            char["str"] += 1
-            char["int"] -= 1
-        if affinity == "water":
-            char["int"] += 1
-            char["str"] -= 1
-        if affinity == "air":
-            char["dex"] += 1
-            char["vit"] -= 1
-        if affinity == "earth":
-            char["vit"] += 1
-            char["dex"] -= 1
-        char["def"] = 10+char["dex"]+char["vit"]
-        char["hp"] = 12+char["vit"]
-        char["mp"] = 10+char["int"]
-
+        char = character.Human(name, user = user_id)
         return char
 
 def embed_sheet(char):
+        attributes = char.get_attributes()
         embed = discord.Embed(
-            title = char["name"],
+            title = char.get_name(),
             color = 0xfcba03
         )
-        embed.add_field(name = "STR", value = char["str"])
-        embed.add_field(name = "DEX", value = char["dex"])
-        embed.add_field(name = "VIT", value = char["vit"])
-        embed.add_field(name = "INT", value = char["int"])
-        embed.add_field(name = "PER", value = char["per"])
-        embed.add_field(name = "CHA", value = char["cha"])
-        embed.add_field(name = "DEF", value = char["def"])
-        embed.add_field(name = "HP", value = char["hp"])
-        embed.add_field(name = "MP", value = char["mp"])
-        embed.add_field(name = "CP", value = char["cp"])
-        embed.add_field(name = "IP", value = char["ip"])
-        embed.add_field(name = "Gold", value = char["gold"])
+        embed.add_field(name = "STR", value = attributes["str"])
+        embed.add_field(name = "DEX", value = attributes["dex"])
+        embed.add_field(name = "VIT", value = attributes["vit"])
+        embed.add_field(name = "INT", value = attributes["int"])
+        embed.add_field(name = "PER", value = attributes["per"])
+        embed.add_field(name = "CHA", value = attributes["cha"])
+        embed.add_field(name = "DEF", value = char.get_def())
+        embed.add_field(name = "HP", value = char.get_hp())
+        embed.add_field(name = "MP", value = char.get_mp())
+        embed.add_field(name = "CP", value = char.get_cp())
+        embed.add_field(name = "IP", value = char.get_ip())
+        embed.add_field(name = "Gold", value = char.get_gold())
         embed.set_footer(text = "LV: {}\nXP: {}/{}\naffinity: {}\nstatus: {}"
-        .format(char["lv"], char["xp"], char["lv"]*10, char["affinity"], char["status"] ))
+        .format(char.get_lv(), char.get_xp(), char.get_lv()*10, char.get_affinity(), char.get_status() ))
 
         return embed
 
 def save_char(char):
-        db.char_sheets.insert_one(char)
-        print("Saved '{}' for user_id '{}'".format(char["name"], char["user"]))
+        dict_char = char.dump()
+        db.characters.insert_one(dict_char)
+        print("Saved '{}' for user_id '{}'".format(char.get_name(), char.get_user()))
 
 def update_char(char):
-    db.char_sheets.update_one({ "_id" : char["_id"] }, {"$set":char})
-    print("Updated '{}' for user_id '{}'".format(char["name"], char["user"]))
+    db.characters.update_one({ "_id" : char["_id"] }, {"$set":char})
+    print("Updated '{}' for user_id '{}'".format(char["_Character__name"], char["_Character__user"]))
 
 @bot.command()
 async def roll(ctx, dice, *argv): 
@@ -188,14 +150,14 @@ async def newchar(ctx, *argv):
             char = generate_char(name, ctx.author.id)
             main = get_main_char(ctx.author.id)
             if not main:
-                char["main"] = "true"
+                char.set_main()
             save_char(char)
             embed = embed_sheet(char)
 
             await ctx.send(embed = embed)
         else:
-            await ctx.send("No name given")
-    except expression as identifier:
+            await ctx.send("No name was given.")
+    except:
         await ctx.send("Something didn't go well :| ")
 
 @bot.command()
@@ -204,12 +166,12 @@ async def chars(ctx, *argv):
         chars = []
         allchars = []
         n = 1
-        for char in db.char_sheets.find({"user":ctx.author.id}):
+        for char in db.characters.find({"_Character__user":ctx.author.id}):
             chars.append(char)
-            if char["main"] != "false":
-                allchars.append("{}. {} [MAIN]\n".format(n, char["name"]))
+            if char["_Character__main"]:
+                allchars.append("{}. {} [MAIN]\n".format(n, char["_Character__name"]))
             else:
-                allchars.append("{}. {}\n".format(n, char["name"]))
+                allchars.append("{}. {}\n".format(n, char["_Character__name"]))
             n += 1
             
         embed = discord.Embed(
@@ -226,9 +188,11 @@ async def char(ctx, index, *argv):
     try:
         i = 0
         found = False
-        for char in db.char_sheets.find({"user":ctx.author.id}):
+        for char in db.characters.find({"_Character__user":ctx.author.id}):
             if i == ( int(index)-1 ):
-                embed = embed_sheet(char)
+                new_char = character.Human("humano", ctx.author.id)
+                new_char.load(char)
+                embed = embed_sheet(new_char)
                 await ctx.send(embed = embed)
                 found = True
                 break
@@ -243,12 +207,12 @@ async def setmain(ctx, index, *argv):
     try:
         i = 0
         found = False
-        for char in db.char_sheets.find({"user":ctx.author.id}):
+        for char in db.characters.find({"_Character__user":ctx.author.id}):
             if i == ( int(index) - 1 ):
-                db.char_sheets.update_many({"user":ctx.author.id}, {"$set":{ "main":"false" }})
-                db.char_sheets.update_one({ "_id" : char["_id"] }, {"$set":{ "main":"true" }})
+                db.characters.update_many({"_Character__user":ctx.author.id}, {"$set":{ "_Character__main": False }})
+                db.characters.update_one({ "_id" : char["_id"] }, {"$set":{ "_Character__main": True }})
                 found = True
-                await ctx.send("Character {} is now the main".format(char["name"]))
+                await ctx.send("Character {} is now the main".format(char["_Character__name"]))
                 break
             i += 1
         if not found:
@@ -261,11 +225,11 @@ async def delchar(ctx, index, *argv):
     try:
         i = 0
         found = False
-        for char in db.char_sheets.find({"user":ctx.author.id}):
+        for char in db.characters.find({"_Character__user":ctx.author.id}):
             if i == ( int(index) - 1 ):
-                db.char_sheets.delete_one({ "_id" : char["_id"] })
+                db.characters.delete_one({ "_id" : char["_id"] })
                 found = True
-                await ctx.send("Character {} has been removed".format(char["name"]))
+                await ctx.send("Character {} has been removed".format(char["_Character__name"]))
                 break
             i += 1
         if not found:
@@ -278,33 +242,36 @@ async def test(ctx, type, *argv):
     try:
         char = get_main_char(ctx.author.id)
         blocked_status = ["dead", "unconscious"]
-        if char["status"] not in blocked_status:
+        if char["_Character__status"] not in blocked_status:
+            attributes = char["_Character__attributes"]
             if type == "str":
                 value = random.randint(1, 20) 
-                result = value + char["str"]
-                await ctx.send("{} attempts a Test of Strength!!\n{}!! ({} + {})".format(char["name"], result, value, char["str"]))
+                result = value + attributes["_Attributes__str"]
+                await ctx.send("{} attempts a Test of Strength!!\n{}!! ({} + {})".format(char["_Character__name"], result, value, attributes["_Attributes__str"]))
             if type == "dex":
                 value = random.randint(1, 20) 
-                result = value + char["dex"]
-                await ctx.send("{} attempts a Test of Dexterity!!\n{}!! ({} + {})".format(char["name"], result, value, char["dex"]))
+                result = value + attributes["_Attributes__dex"]
+                await ctx.send("{} attempts a Test of Dexterity!!\n{}!! ({} + {})".format(char["_Character__name"], result, value, attributes["_Attributes__dex"]))
             if type == "vit":
                 value = random.randint(1, 20) 
-                result = value + char["vit"]
-                await ctx.send("{} attempts a Test of Vitality!!\n{}!! ({} + {})".format(char["name"], result, value, char["vit"]))
+                result = value + attributes["_Attributes__vit"]
+                await ctx.send("{} attempts a Test of Vitality!!\n{}!! ({} + {})".format(char["_Character__name"], result, value, attributes["_Attributes__vit"]))
             if type == "int":
                 value = random.randint(1, 20) 
-                result = value + char["int"]
-                await ctx.send("{} attempts a Test of Intelligence!!\n{}!! ({} + {})".format(char["name"], result, value, char["int"]))
+                result = value + attributes["_Attributes__int"]
+                await ctx.send("{} attempts a Test of Intelligence!!\n{}!! ({} + {})".format(char["_Character__name"], result, value, attributes["_Attributes__int"]))
             if type == "per":
                 value = random.randint(1, 20) 
-                result = value + char["per"]
-                await ctx.send("{} attempts a Test of Perception!!\n{}!! ({} + {})".format(char["name"], result, value, char["per"]))
+                result = value + attributes["_Attributes__per"]
+                await ctx.send("{} attempts a Test of Perception!!\n{}!! ({} + {})".format(char["_Character__name"], result, value, attributes["_Attributes__per"]))
             if type == "cha":
                 value = random.randint(1, 20) 
-                result = value + char["cha"]
-                await ctx.send("{} attempts a Test of Charisma!!\n{}!! ({} + {})".format(char["name"], result, value, char["cha"]))
+                result = value + attributes["_Attributes__cha"]
+                await ctx.send("{} attempts a Test of Charisma!!\n{}!! ({} + {})".format(char["_Character__name"], result, value, attributes["_Attributes__cha"]))
+            else:
+                await ctx.send("This test is invalid!")
         else:
-            await ctx.send("{} is unable to test because it's {}.".format(char["name"], char["status"]))
+            await ctx.send("{} is unable to test because it's {}.".format(char["_Character__name"], char["_Character__status"]))
     except expression as identifier:
         await ctx.send("Something didn't go well :| ")
 
@@ -313,11 +280,12 @@ async def hit(ctx, player, damage, *argv):
     try:
         guild = ctx.guild
         user = guild.get_member_named( player )
+        blocked_status = ["dead", "unconscious"]
         if user:
             char = get_main_char( user.id )
-            char["hp"] -= int(damage)
-            if char["hp"] > 0:
-                await ctx.send("{} has taken {}pts of damage! It now has {}hp.".format(char["name"], damage, char["hp"]))
+            char["_Character__hp"] -= int(damage)
+            if char["_Character__hp"] > 0:
+                await ctx.send("{} has taken {}pts of damage! It now has {}hp.".format(char["_Character__name"], damage, char["_Character__hp"]))
             else:#Dying
                 successes = 0
                 fails = 0
@@ -325,19 +293,19 @@ async def hit(ctx, player, damage, *argv):
                     roll = random.randint(1, 20)
                     if roll >= 10:
                         successes += 1
-                        if successes == 3:
-                            char["hp"] = 0
-                            char["status"] = "unconscious"
+                        if successes == 3 and char["_Character__status"] not in blocked_status:
+                            char["_Character__hp"] = 0
+                            char["_Character__status"] = "unconscious"
                             update_char(char)
-                            await ctx.send("{} is unconscious and very weak now!".format(char["name"]))
+                            await ctx.send("{} is unconscious and very weak now!".format(char["_Character__name"]))
                             break
                     else:
                         fails += 1
                         if fails == 3:
-                            char["hp"] = 0
-                            char["status"] = "dead"
+                            char["_Character__hp"] = 0
+                            char["_Character__status"] = "dead"
                             update_char(char)
-                            await ctx.send("{} has taken {}pts of damage! It is now dead.".format(char["name"], damage))
+                            await ctx.send("{} has taken {}pts of damage! It is now dead.".format(char["_Character__name"], damage))
                             break
             update_char(char)
         else:
@@ -350,14 +318,14 @@ async def rest(ctx, *argv):
     try:
         blocked_status = ["dead"]
         char = get_main_char(ctx.author.id)
-        if char["status"] not in blocked_status:
-            char["hp"] = 12 + char["vit"]
-            char["mp"] = 10 + char["int"]
-            char["status"] = "alive"
-            await ctx.send("{} is now resting...".format(char["name"]))
+        if char["_Character__status"] not in blocked_status:
+            char["_Character__hp"] = 12 + char["_Character__vit"]
+            char["_Character__mp"] = 10 + char["_Character__int"]
+            char["_Character__status"] = "alive"
+            await ctx.send("{} is now resting...".format(char["_Character__name"]))
             update_char(char)
         else:
-            await ctx.send("{} can't rest because it is {} right now.".format(char["name"], char["status"]))
+            await ctx.send("{} can't rest because it is {} right now.".format(char["_Character__name"], char["_Character__status"]))
     except:
         await ctx.send("Something didn't go well :|")
 
@@ -371,14 +339,15 @@ async def res(ctx, username, *argv):
                 break
         if isGM:
             player = ctx.guild.get_member_named(username)
-            if player != None:
+            if player:
                 char = get_main_char(player.id)
                 if char:
-                    char["status"] = "alive"
-                    char["hp"] = 12 + char["vit"]
-                    char["mp"] = 10 + char["int"]
+                    char["_Character__status"] = "alive"
+                    attr = char["_Character__attributes"]
+                    char["_Character__hp"] = 12 + attr["_Attributes__vit"]
+                    char["_Character__mp"] = 10 + attr["_Attributes__int"]
                     update_char(char)
-                    await ctx.send("{} came back from the dead.".format(char["name"]))
+                    await ctx.send("{} came back from the dead.".format(char["_Character__name"]))
                 else:
                     await ctx.send("No character was found.")
             else:
@@ -404,21 +373,21 @@ async def givexp(ctx, xp, *argv):
                 if player:
                     char = get_main_char(player.id)
                     if char:
-                        char["xp"] += int(xp)
-                        while char["xp"] >= ( char["lv"] * 10 ):
-                            left = char["xp"] - ( char["lv"] * 10 )
-                            char["xp"] = left
-                            char["lv"] += 1
-                            char["ip"] += 1
-                            if char["lv"] % 2 != 0:
-                                char["cp"] += 1
-                            levelup_messages.append( "{} leveled up! Level {} now!".format(char["name"], char["lv"]) )
+                        char["_Character__xp"] += int(xp)
+                        while char["_Character__xp"] >= ( char["_Character__lv"] * 10 ):
+                            left = char["_Character__xp"] - ( char["_Character__lv"] * 10 )
+                            char["_Character__xp"] = left
+                            char["_Character__lv"] += 1
+                            char["_Character__ip"] += 1
+                            if char["_Character__lv"] % 2 != 0:
+                                char["_Character__cp"] += 1
+                            levelup_messages.append( "{} leveled up! Level {} now!".format(char["_Character__name"], char["_Character__lv"]) )
                         update_char(char)
                         names.append( username + ", " )
             names = "".join(names)
             if names:
                 names = names[:-2]
-            await ctx.send("{}xp was given to {}!".format(xp, names))
+                await ctx.send("{}xp was given to {}!".format(xp, names))
             for msg in levelup_messages:
                 await ctx.send(msg)
         else:
@@ -438,16 +407,16 @@ async def givegold(ctx, gold, *argv):
             names = []
             for username in argv:
                 player = ctx.guild.get_member_named(username)
-                if player != None:
+                if player:
                     char = get_main_char(player.id)
-                    if char != None:
-                        char["gold"] += int(gold)
+                    if char:
+                        char["_Character__gold"] += int(gold)
                         update_char(char)
                         names.append( username + ", " )
             names = "".join(names)
             if names:
                 names = names[:-2]
-            await ctx.send("{} of gold was given to {}.".format(gold, names))
+                await ctx.send("{} of gold was given to {}.".format(gold, names))
         else:
             await ctx.send("You must be a Game Master in order to use this command.")
     except expression as identifier:
@@ -458,14 +427,15 @@ async def iattr(ctx, attr, *argv):
     try:
         char = get_main_char(ctx.author.id)
         if char:
-            if char["cp"] > 0:
+            if char["_Character__cp"] > 0:
                 attrs = ['str', 'dex', 'int', 'vit', 'per', 'cha']
+                char_attrs = char["_Character__attributes"]
                 if attr in attrs:
-                    char[attr] += 1
-                    char["def"] = 10+char["dex"]+char["vit"]
-                    char["hp"] = 12+char["vit"]
-                    char["mp"] = 10+char["int"]
-                    char["cp"] -= 1
+                    char_attrs["_Attributes__"+attr] += 1
+                    char["_Character__def"] = 10+char_attrs["_Attributes__dex"]+char_attrs["_Attributes__vit"]
+                    char["_Character__hp"] = 12+char_attrs["_Attributes__vit"]
+                    char["_Character__mp"] = 10+char_attrs["_Attributes__int"]
+                    char["_Character__cp"] -= 1
                     update_char(char)
                     await ctx.send("{} points was increased with success!".format(attr))
                 else:
